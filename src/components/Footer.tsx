@@ -59,7 +59,7 @@ export default function Footer() {
                     Substitua SEUNUMERO
                     ═══════════════════════════════════ */}
                 <a
-                  href="https://wa.me/55SEUNUMERO"
+                  href="https://wa.me/5521982077479"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-rose transition-colors flex items-center gap-2"

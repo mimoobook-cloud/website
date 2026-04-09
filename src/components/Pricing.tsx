@@ -146,7 +146,7 @@ export default function Pricing() {
                   Exemplo: 5511999999999
                   ════════════════════════════════════════════════════ */}
               <a
-                href={`https://wa.me/55SEUNUMERO?text=Oi!%20Quero%20o%20plano%20${plan.name}%20do%20Mimoobook!`}
+                href={`https://wa.me/5521982077479?text=Oi!%20Quero%20o%20plano%20${plan.name}%20do%20Mimoobook!`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={`block w-full text-center py-4 rounded-full font-bold text-base transition-all hover:scale-105 ${

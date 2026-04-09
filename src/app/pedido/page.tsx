@@ -226,7 +226,7 @@ function OrderFlow() {
          Substitua SEUNUMERO pelo WhatsApp da loja
          Formato: 55 + DDD + numero (sem espacos)
          ═══════════════════════════════════════════ */
-      const url = `https://wa.me/55SEUNUMERO?text=${encodeURIComponent(msg)}`;
+      const url = `https://wa.me/5521982077479?text=${encodeURIComponent(msg)}`;
       window.open(url, "_blank");
     } catch {
       alert("Erro de conexao. Tente novamente.");
