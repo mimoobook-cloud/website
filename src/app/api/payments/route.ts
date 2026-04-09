@@ -1,29 +1,25 @@
 import { NextResponse } from "next/server";
 import { MercadoPagoConfig, Payment } from "mercadopago";
 
-const client = new MercadoPagoConfig({
-  accessToken: process.env.MP_ACCESS_TOKEN!,
-});
-
-/**
- * POST /api/payments
- * Processa pagamento via Mercado Pago (checkout transparente)
- *
- * Body para CARTAO:
- *   { type: "card", token, installments, issuerId, paymentMethodId, amount, payer, orderData }
- *
- * Body para PIX:
- *   { type: "pix", amount, payer, orderData }
- */
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const accessToken = process.env.MP_ACCESS_TOKEN;
+
+    if (!accessToken) {
+      return NextResponse.json(
+        { success: false, error: "MP_ACCESS_TOKEN nao configurado" },
+        { status: 500 }
+      );
+    }
+
+    const client = new MercadoPagoConfig({ accessToken });
     const payment = new Payment(client);
+    const body = await request.json();
 
     if (body.type === "pix") {
       const result = await payment.create({
         body: {
-          transaction_amount: body.amount,
+          transaction_amount: Number(body.amount),
           payment_method_id: "pix",
           payer: {
             email: body.payer.email,
@@ -31,12 +27,6 @@ export async function POST(request: Request) {
             last_name: body.payer.lastName,
           },
           description: `Mimoobook ${body.orderData?.plan || ""} - ${body.orderData?.photoCount || 0} fotos`,
-          metadata: {
-            order_name: body.orderData?.name,
-            order_whatsapp: body.orderData?.whatsapp,
-            order_category: body.orderData?.category,
-            order_photo_count: body.orderData?.photoCount,
-          },
         },
       });
 
@@ -49,16 +39,15 @@ export async function POST(request: Request) {
           result.point_of_interaction?.transaction_data?.qr_code_base64,
         ticketUrl:
           result.point_of_interaction?.transaction_data?.ticket_url,
-        expirationDate: result.date_of_expiration,
       });
     }
 
     if (body.type === "card") {
       const result = await payment.create({
         body: {
-          transaction_amount: body.amount,
+          transaction_amount: Number(body.amount),
           token: body.token,
-          installments: body.installments,
+          installments: Number(body.installments),
           issuer_id: body.issuerId,
           payment_method_id: body.paymentMethodId,
           payer: {
@@ -68,12 +57,6 @@ export async function POST(request: Request) {
             identification: body.payer.identification,
           },
           description: `Mimoobook ${body.orderData?.plan || ""} - ${body.orderData?.photoCount || 0} fotos`,
-          metadata: {
-            order_name: body.orderData?.name,
-            order_whatsapp: body.orderData?.whatsapp,
-            order_category: body.orderData?.category,
-            order_photo_count: body.orderData?.photoCount,
-          },
         },
       });
 
@@ -90,8 +73,19 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Erro desconhecido";
-    console.error("Payment error:", err);
+    console.error("Payment error:", JSON.stringify(err, null, 2));
+
+    let message = "Erro ao processar pagamento";
+    if (err instanceof Error) {
+      message = err.message;
+    } else if (typeof err === "object" && err !== null) {
+      const e = err as Record<string, unknown>;
+      message =
+        (e.message as string) ||
+        (e.cause as string) ||
+        JSON.stringify(e);
+    }
+
     return NextResponse.json(
       { success: false, error: message },
       { status: 500 }
