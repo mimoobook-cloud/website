@@ -10,11 +10,10 @@ import {
   X,
   ArrowLeft,
   ArrowRight,
-  MessageCircle,
   ImagePlus,
-  Loader2,
   Info,
 } from "lucide-react";
+import Checkout from "@/components/Checkout";
 
 /* ══════════════════════════════════════════════════════════════
    FLUXO DE VENDA — 3 STEPS (sem escolha de plano)
@@ -72,7 +71,7 @@ const categories = [
   { value: "momentos", label: "Momentos" },
 ];
 
-const STEP_LABELS = ["Info", "Fotos", "Revisao"];
+const STEP_LABELS = ["Info", "Fotos", "Revisao", "Pagamento"];
 
 function OrderFlow() {
   const searchParams = useSearchParams();
@@ -87,7 +86,6 @@ function OrderFlow() {
   });
   const [photos, setPhotos] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const plan = getPlanFromPhotos(photos.length);
@@ -139,64 +137,34 @@ function OrderFlow() {
   };
 
   const goNext = () => {
-    setStep((s) => Math.min(3, s + 1));
+    setStep((s) => Math.min(4, s + 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const handleFinalize = async () => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
+  // Callback apos pagamento aprovado
+  const handlePaymentSuccess = (paymentId: string, orderNumber: string) => {
+    const categoryLabel =
+      categories.find((c) => c.value === formData.category)?.label || "";
 
-    try {
-      const categoryLabel =
-        categories.find((c) => c.value === formData.category)?.label || "";
+    const msg = [
+      `*Pedido Pago — Mimoobook*`,
+      `*Pedido:* #${orderNumber}`,
+      `*Pagamento:* #${paymentId}`,
+      ``,
+      `*Plano:* ${plan.name}${plan.extras > 0 ? ` + ${plan.extras} fotos extras` : ""}`,
+      `*Valor:* R$ ${plan.total.toFixed(2)}`,
+      `*Nome:* ${formData.name}`,
+      `*Categoria:* ${categoryLabel}`,
+      formData.message ? `*Dedicatoria:* "${formData.message}"` : "",
+      `*Fotos:* ${photos.length}`,
+      ``,
+      `_Pagamento confirmado! Vamos preparar seu Mimoobook._`,
+    ]
+      .filter(Boolean)
+      .join("\n");
 
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          plan: plan.id,
-          name: formData.name,
-          whatsapp: formData.whatsapp.replace(/\D/g, ""),
-          category: formData.category,
-          message: formData.message,
-          photoCount: photos.length,
-          total: plan.total,
-          extras: plan.extras,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!data.success) {
-        alert("Erro ao criar pedido. Tente novamente.");
-        setIsSubmitting(false);
-        return;
-      }
-
-      const msg = [
-        `*Novo Pedido Mimoobook*`,
-        `*Pedido:* #${data.orderNumber}`,
-        ``,
-        `*Plano:* ${plan.name}${plan.extras > 0 ? ` + ${plan.extras} fotos extras` : ""}`,
-        `*Valor:* R$ ${plan.total.toFixed(2)}`,
-        `*Nome:* ${formData.name}`,
-        `*Categoria:* ${categoryLabel}`,
-        formData.message ? `*Dedicatoria:* "${formData.message}"` : "",
-        `*Fotos:* ${photos.length}`,
-        ``,
-        `_Pedido registrado com sucesso!_`,
-      ]
-        .filter(Boolean)
-        .join("\n");
-
-      const url = `https://wa.me/5521982077479?text=${encodeURIComponent(msg)}`;
-      window.open(url, "_blank");
-    } catch {
-      alert("Erro de conexao. Tente novamente.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    const url = `https://wa.me/5521982077479?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
   };
 
   // Plan indicator badge for step 2
@@ -294,7 +262,7 @@ function OrderFlow() {
           <div className="w-full h-2 bg-nude-light rounded-full overflow-hidden">
             <div
               className="h-full bg-rose rounded-full transition-all duration-500"
-              style={{ width: `${(step / 3) * 100}%` }}
+              style={{ width: `${(step / 4) * 100}%` }}
             />
           </div>
         </div>
@@ -603,24 +571,35 @@ function OrderFlow() {
                   Voltar
                 </button>
                 <button
-                  onClick={handleFinalize}
-                  disabled={isSubmitting}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-green-500 text-white rounded-full font-bold text-lg hover:bg-green-600 transition-all hover:scale-105 shadow-lg shadow-green-500/25 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  onClick={goNext}
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-rose text-white rounded-full font-bold text-lg hover:bg-rose-dark transition-all hover:scale-105 shadow-lg shadow-rose/25"
                 >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 size={22} className="animate-spin" />
-                      Processando...
-                    </>
-                  ) : (
-                    <>
-                      <MessageCircle size={22} fill="currentColor" />
-                      Finalizar Pedido — R$ {plan.total.toFixed(2)}
-                    </>
-                  )}
+                  Ir para Pagamento — R$ {plan.total.toFixed(2)}
+                  <ArrowRight size={18} />
                 </button>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* STEP 4: Pagamento Mercado Pago */}
+        {step === 4 && (
+          <div className="max-w-lg mx-auto">
+            <Checkout
+              amount={plan.total}
+              orderData={{
+                plan: plan.name,
+                name: formData.name,
+                whatsapp: formData.whatsapp.replace(/\D/g, ""),
+                category: formData.category,
+                message: formData.message,
+                photoCount: photos.length,
+                total: plan.total,
+                extras: plan.extras,
+              }}
+              onSuccess={handlePaymentSuccess}
+              onBack={goBack}
+            />
           </div>
         )}
 
