@@ -10,7 +10,7 @@ const faqs = [
   },
   {
     q: "Como envio as fotos?",
-    a: "Pelo WhatsApp! Depois que voce escolher o plano, a gente te orienta sobre as melhores fotos e formatos.",
+    a: "Direto pelo nosso site! No momento do pedido, voce seleciona as fotos da galeria do seu celular ou computador. Simples e rapido.",
   },
   {
     q: "Posso escolher as frases de cada pagina?",
