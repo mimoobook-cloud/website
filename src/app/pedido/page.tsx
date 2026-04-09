@@ -588,7 +588,7 @@ function OrderFlow() {
             <Checkout
               amount={plan.total}
               orderData={{
-                plan: plan.name,
+                plan: plan.id,
                 name: formData.name,
                 whatsapp: formData.whatsapp.replace(/\D/g, ""),
                 category: formData.category,
@@ -597,6 +597,7 @@ function OrderFlow() {
                 total: plan.total,
                 extras: plan.extras,
               }}
+              photos={photos}
               onSuccess={handlePaymentSuccess}
               onBack={goBack}
             />

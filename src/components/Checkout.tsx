@@ -74,11 +74,36 @@ interface OrderData {
 interface Props {
   amount: number;
   orderData: OrderData;
+  photos: File[];
   onSuccess: (paymentId: string, orderNumber: string) => void;
   onBack: () => void;
 }
 
-export default function Checkout({ amount, orderData, onSuccess, onBack }: Props) {
+async function createOrder(orderData: OrderData, email: string) {
+  const res = await fetch("/api/orders", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...orderData, email }),
+  });
+  return res.json();
+}
+
+async function updateOrder(orderId: string, paymentData: Record<string, unknown>) {
+  await fetch("/api/orders", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ orderId, ...paymentData }),
+  });
+}
+
+async function uploadPhotos(orderId: string, photos: File[]) {
+  const formData = new FormData();
+  formData.append("orderId", orderId);
+  photos.forEach((photo) => formData.append("files", photo));
+  await fetch("/api/upload", { method: "POST", body: formData });
+}
+
+export default function Checkout({ amount, orderData, photos, onSuccess, onBack }: Props) {
   const [method, setMethod] = useState<"pix" | "card">("pix");
   const [mpReady, setMpReady] = useState(false);
   const [mp, setMp] = useState<MercadoPagoInstance | null>(null);
@@ -217,24 +242,28 @@ export default function Checkout({ amount, orderData, onSuccess, onBack }: Props
       setPixQr(data.qrCode || "");
       setPixQrBase64(data.qrCodeBase64 || "");
 
-      // Create order
-      const orderRes = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...orderData,
-          paymentId: data.paymentId,
-          paymentMethod: "pix",
-          paymentStatus: data.status,
-        }),
+      // Create order in Supabase
+      const orderResult = await createOrder(orderData, email);
+      if (!orderResult.success) {
+        setError("Erro ao registrar pedido");
+        setLoading(false);
+        return;
+      }
+
+      // Update order with payment info
+      await updateOrder(orderResult.orderId, {
+        paymentId: data.paymentId,
+        paymentMethod: "pix",
+        paymentStatus: data.status,
       });
-      const orderResult = await orderRes.json();
 
       if (data.status === "approved") {
+        // Upload photos to Supabase Storage
+        await uploadPhotos(orderResult.orderId, photos);
         setPixPaid(true);
         onSuccess(data.paymentId, orderResult.orderNumber);
       }
-      // For pending pix, show QR code
+      // For pending pix, show QR code (upload after confirmation)
     } catch {
       setError("Erro de conexao. Tente novamente.");
     } finally {
@@ -310,19 +339,20 @@ export default function Checkout({ amount, orderData, onSuccess, onBack }: Props
         return;
       }
 
+      // Create order in Supabase
+      const orderResult = await createOrder(orderData, email);
+
+      // Update order with payment info
+      await updateOrder(orderResult.orderId, {
+        paymentId: data.paymentId,
+        paymentMethod: "card",
+        paymentStatus: data.status,
+        installments,
+      });
+
       if (data.status === "approved") {
-        const orderRes = await fetch("/api/orders", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...orderData,
-            paymentId: data.paymentId,
-            paymentMethod: "card",
-            paymentStatus: data.status,
-            installments,
-          }),
-        });
-        const orderResult = await orderRes.json();
+        // Upload photos to Supabase Storage
+        await uploadPhotos(orderResult.orderId, photos);
         onSuccess(data.paymentId, orderResult.orderNumber);
       } else if (data.status === "in_process") {
         setError("Pagamento em analise. Voce sera notificado por e-mail.");
