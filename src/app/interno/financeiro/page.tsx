@@ -612,7 +612,7 @@ export default function FinanceiroPage() {
                     formato="Imagem unica (alta qualidade) + Video curto alternado"
                     criativo="Foto do scrapbook com embalagem premium, flat lay clean. Texto overlay: 'Ultimas vagas da semana'. Badge: 'A partir de R$ 149'."
                     hook="'Ainda pensando? Olha o que os outros ja receberam'"
-                    copy="Seu Mimoobook pronto em 7 dias. 20, 40 ou 60 fotos Polaroid + caneta branca + adesivos. Toque pra pedir o seu antes que as vagas acabem."
+                    copy="Seu Mimoobook enviado em ate 7 dias uteis. 20, 40 ou 60 fotos Polaroid + caneta branca + adesivos. Toque pra pedir o seu antes que as vagas acabem."
                     cta="Pedir Agora / Enviar Mensagem"
                     kpis="CPA < R$ 50 | ROAS > 4x | Compras > 3/dia"
                   />
@@ -625,9 +625,9 @@ export default function FinanceiroPage() {
                     publico="Keywords: 'presente personalizado', 'scrapbook personalizado', 'presente criativo namorado', 'album de fotos polaroid', 'presente dia dos namorados'"
                     posicionamento="Google Search"
                     formato="RSA (Responsive Search Ad) com 15 titulos e 4 descricoes"
-                    criativo="Titulos testados: 'Scrapbook Com Suas Fotos em Polaroid' | 'O Presente Que Faz Chorar' | 'Feito a Mao, Unico Como Voces' | 'A Partir de R$ 149 — Entrega em 7 Dias' | '20, 40 ou 60 Fotos Polaroid'"
+                    criativo="Titulos testados: 'Scrapbook Com Suas Fotos em Polaroid' | 'O Presente Que Faz Chorar' | 'Feito a Mao, Unico Como Voces' | 'A Partir de R$ 149 — Envio em 7 Dias Uteis' | '20, 40 ou 60 Fotos Polaroid'"
                     hook="N/A (Search)"
-                    copy="Desc 1: Scrapbook artesanal com suas fotos impressas em Polaroid. Kit completo com caneta branca e adesivos. Pronto em 7 dias. | Desc 2: Mais de 500 presentes entregues. Escolha seu plano e crie memorias eternas. Peca pelo site."
+                    copy="Desc 1: Scrapbook artesanal com suas fotos impressas em Polaroid. Kit completo com caneta branca e adesivos. Envio em ate 7 dias uteis. | Desc 2: Mais de 500 presentes entregues. Escolha seu plano e crie memorias eternas. Peca pelo site."
                     cta="Extensoes: Sitelink (Planos, Como Funciona, Depoimentos) | Callout (Feito a Mao, Frete para Todo Brasil, 3x Sem Juros)"
                     kpis="CPC < R$ 2,00 | CTR > 5% | Conv Rate > 4% | CPA < R$ 40"
                   />

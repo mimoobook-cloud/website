@@ -6,7 +6,7 @@ import { ChevronDown } from "lucide-react";
 const faqs = [
   {
     q: "Quanto tempo demora pra ficar pronto?",
-    a: "Depende do plano: Essencial em ate 7 dias, Especial em 5 dias e Premium em 3 dias uteis apos o envio das fotos.",
+    a: "Apos o envio das fotos, preparamos e enviamos seu Mimoobook em ate 7 dias uteis. A entrega pelos Correios leva de 15 a 30 dias dependendo da sua regiao.",
   },
   {
     q: "Como envio as fotos?",

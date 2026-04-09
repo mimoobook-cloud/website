@@ -74,7 +74,7 @@ export default function FamiliaPage() {
               </Link>
 
               <p className="mt-4 text-sm text-text-light">
-                A partir de R$ 149 · Entrega em ate 7 dias
+                A partir de R$ 149 · Envio em ate 7 dias uteis
               </p>
             </div>
 

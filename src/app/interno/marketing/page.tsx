@@ -330,7 +330,7 @@ export default function MarketingPage() {
                       audience="Retargeting: visitou site, adicionou ao carrinho, engajou no MOFU"
                       budget="R$ 25-40/dia"
                       creative="Imagem unica com oferta clara + urgencia"
-                      copy="Ultimas vagas da semana! Seu Mimoobook pronto em 7 dias. Escolha entre 20, 40 ou 60 fotos Polaroid. Toque pra pedir o seu."
+                      copy="Ultimas vagas da semana! Seu Mimoobook enviado em ate 7 dias uteis. Escolha entre 20, 40 ou 60 fotos Polaroid. Toque pra pedir o seu."
                     />
                   </div>
                 </Card>
@@ -526,7 +526,7 @@ export default function MarketingPage() {
                       audience="Quem busca 'mimoobook', 'mimoo book', 'mimoobook.com.br'"
                       budget="R$ 5-10/dia"
                       creative="Extensoes de sitelink, callout, preco"
-                      copy="Mimoobook — Scrapbook Artesanal Personalizado | A partir de R$ 149 | Fotos Polaroid + Adesivos | Entrega em 7 dias | Peca o Seu"
+                      copy="Mimoobook — Scrapbook Artesanal Personalizado | A partir de R$ 149 | Fotos Polaroid + Adesivos | Envio em 7 dias uteis | Peca o Seu"
                     />
                     <Campaign
                       name="Generica — Presente Criativo"
@@ -534,7 +534,7 @@ export default function MarketingPage() {
                       audience="Palavras-chave: 'presente personalizado', 'presente criativo namorado', 'scrapbook personalizado', 'presente dia dos namorados'"
                       budget="R$ 30-50/dia"
                       creative="RSA com 15 titulos e 4 descricoes testando angulos diferentes"
-                      copy="Titulo 1: O Presente Que Faz Chorar de Emocao | Titulo 2: Scrapbook Com Suas Fotos em Polaroid | Titulo 3: Feito a Mao, Unico Como Voces | Desc: 20, 40 ou 60 fotos Polaroid impressas. Kit completo com caneta e adesivos. Entrega em ate 7 dias."
+                      copy="Titulo 1: O Presente Que Faz Chorar de Emocao | Titulo 2: Scrapbook Com Suas Fotos em Polaroid | Titulo 3: Feito a Mao, Unico Como Voces | Desc: 20, 40 ou 60 fotos Polaroid impressas. Kit completo com caneta e adesivos. Envio em ate 7 dias uteis. Entrega em 15 a 30 dias."
                     />
                     <Campaign
                       name="Datas — Sazonais"
@@ -691,7 +691,7 @@ export default function MarketingPage() {
                     />
                     <CopyBlock
                       title="Legenda urgencia"
-                      text={`ULTIMAS VAGAS DA SEMANA.\n\nComo cada Mimoobook e feito a mao, aceitamos poucas encomendas por semana.\n\nSe voce quer receber o seu em ate 7 dias, peca agora pelo link na bio.\n\n20, 40 ou 60 fotos Polaroid. Caneta branca + adesivos inclusos.`}
+                      text={`ULTIMAS VAGAS DA SEMANA.\n\nComo cada Mimoobook e feito a mao, aceitamos poucas encomendas por semana.\n\nEnviamos em ate 7 dias uteis. Peca agora pelo link na bio.\n\n20, 40 ou 60 fotos Polaroid. Caneta branca + adesivos inclusos.`}
                     />
                   </div>
                 </Card>
@@ -885,7 +885,7 @@ export default function MarketingPage() {
                     <FlowStep
                       n={1}
                       title="Confirmacao de pagamento"
-                      msg="Pagamento confirmado! Seu Mimoobook #[numero] esta sendo preparado com muito carinho.\n\nPrazo: ate 7 dias uteis.\nVou te atualizar por aqui quando estiver pronto!"
+                      msg="Pagamento confirmado! Seu Mimoobook #[numero] esta sendo preparado com muito carinho.\n\nPrazo de envio: ate 7 dias uteis. Entrega pelos Correios: 15 a 30 dias.\nVou te atualizar por aqui quando enviar!"
                     />
                     <FlowStep
                       n={2}
@@ -927,7 +927,7 @@ REGRAS:
 - Sempre responda em portugues brasileiro
 - Se a pessoa perguntar algo que voce nao sabe, diga que vai encaminhar pra um atendente
 - Nunca invente informacoes sobre prazos ou precos
-- Prazo de entrega: ate 7 dias uteis para todos os planos
+- Prazo de envio: ate 7 dias uteis para todos os planos. Entrega pelos Correios: 15 a 30 dias
 - Pagamento: Pix (5% desconto) ou cartao (ate 3x sem juros)
 - Frete: calculado na finalizacao
 - Se pedirem desconto, ofereca 5% no Pix (ja incluso)
