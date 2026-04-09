@@ -20,9 +20,7 @@ export default function FinalCTA() {
             Formato: 55 + DDD + numero (sem espacos)
             ════════════════════════════════════════════════════ */}
         <a
-          href="https://wa.me/5521982077479?text=Oi!%20Quero%20criar%20meu%20Mimoobook!"
-          target="_blank"
-          rel="noopener noreferrer"
+          href="/pedido"
           className="inline-flex items-center px-10 py-5 bg-white text-rose rounded-full text-lg font-bold hover:bg-cream transition-all hover:scale-105 shadow-2xl"
         >
           Criar Meu Mimoobook Agora

@@ -140,15 +140,8 @@ export default function Pricing() {
                 ))}
               </ul>
 
-              {/* ════════════════════════════════════════════════════
-                  Link do WhatsApp: Substitua o NUMERO pelo seu
-                  Formato: 55 + DDD + numero (sem espacos)
-                  Exemplo: 5511999999999
-                  ════════════════════════════════════════════════════ */}
               <a
-                href={`https://wa.me/5521982077479?text=Oi!%20Quero%20o%20plano%20${plan.name}%20do%20Mimoobook!`}
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/pedido"
                 className={`block w-full text-center py-4 rounded-full font-bold text-base transition-all hover:scale-105 ${
                   plan.popular
                     ? "bg-rose text-white hover:bg-rose-dark shadow-lg shadow-rose/30"

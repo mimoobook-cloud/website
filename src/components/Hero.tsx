@@ -24,7 +24,7 @@ export default function Hero() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <a
-                href="#planos"
+                href="/pedido"
                 className="inline-flex items-center justify-center px-8 py-4 bg-rose text-white rounded-full text-lg font-bold hover:bg-rose-dark transition-all hover:scale-105 shadow-lg shadow-rose/25"
               >
                 Criar Meu Mimoobook

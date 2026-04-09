@@ -1,26 +1,26 @@
-import { ImagePlus, Palette, Package } from "lucide-react";
+import { ImagePlus, Scissors, Package } from "lucide-react";
 
 const steps = [
   {
     number: "01",
     icon: ImagePlus,
-    title: "Escolha & envie",
+    title: "Selecione suas fotos",
     description:
-      "Escolha a categoria e o plano. Envie suas fotos favoritas pelo WhatsApp.",
+      "Escolha suas fotos favoritas direto pelo site. Quanto mais fotos, maior o kit que voce recebe.",
   },
   {
     number: "02",
-    icon: Palette,
-    title: "A gente cria",
+    icon: Package,
+    title: "Receba o kit completo",
     description:
-      "Montamos seu scrapbook a mao com todo carinho, cuidado e criatividade.",
+      "Voce recebe em casa: fotos impressas em Polaroid, scrapbook com folhas pretas, caneta branca, cola e adesivos.",
   },
   {
     number: "03",
-    icon: Package,
-    title: "Receba em casa",
+    icon: Scissors,
+    title: "Monte do seu jeito",
     description:
-      "Seu Mimoobook chega embalado pra presente, pronto pra emocionar.",
+      "Cole as fotos, decore com adesivos, escreva mensagens. O scrapbook e seu pra criar como quiser.",
   },
 ];
 
@@ -37,7 +37,7 @@ export default function HowItWorks() {
             esta pronto
           </h2>
           <p className="text-lg text-text-light">
-            Voce nao precisa ter habilidade nenhuma. A gente faz tudo por voce.
+            Voce escolhe as fotos, a gente imprime e envia o kit completo pra voce montar em casa.
           </p>
         </div>
 
@@ -71,7 +71,7 @@ export default function HowItWorks() {
 
         <div className="text-center mt-16">
           <a
-            href="#planos"
+            href="/pedido"
             className="inline-flex items-center px-8 py-4 bg-rose text-white rounded-full text-lg font-bold hover:bg-rose-dark transition-all hover:scale-105 shadow-lg shadow-rose/25"
           >
             Quero Comecar Agora

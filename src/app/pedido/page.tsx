@@ -6,8 +6,6 @@ import { Suspense } from "react";
 import Link from "next/link";
 import {
   Check,
-  Star,
-  Sparkles,
   Camera,
   X,
   ArrowLeft,
@@ -15,74 +13,57 @@ import {
   MessageCircle,
   ImagePlus,
   Loader2,
+  Info,
 } from "lucide-react";
 
 /* ══════════════════════════════════════════════════════════════
-   FLUXO DE VENDA — 4 STEPS
-   Step 1: Escolha do plano
-   Step 2: Informacoes do cliente
-   Step 3: Upload de fotos (abre galeria do celular)
-   Step 4: Revisao → POST /api/orders + WhatsApp
+   FLUXO DE VENDA — 3 STEPS (sem escolha de plano)
+   Step 1: Informacoes do cliente
+   Step 2: Upload de fotos (sem limite — plano auto-detectado)
+   Step 3: Revisao com plano calculado → POST + WhatsApp
+
+   Regras de plano:
+   - Ate 20 fotos → Essencial (R$ 149)
+   - 21-40 fotos  → Especial (R$ 199)
+   - 41-60 fotos  → Premium (R$ 250)
+   - Acima de 60  → Premium + R$ 3,50 por foto extra
    ══════════════════════════════════════════════════════════════ */
 
-type Plan = "essencial" | "especial" | "premium";
-
-const plans: {
-  id: Plan;
-  name: string;
-  price: number;
-  photos: number;
-  features: string[];
-  popular: boolean;
-}[] = [
-  {
-    id: "essencial",
-    name: "Essencial",
-    price: 149,
-    photos: 20,
-    features: [
-      "20 fotos impressas em Polaroid (180g)",
-      "Scrapbook A5 com folhas pretas",
-      "Caneta branca + cola bastao",
-      "Cartela de adesivos tematicos",
-      "Embalagem padrao",
-      "Envio em ate 7 dias uteis",
-    ],
-    popular: false,
-  },
-  {
-    id: "especial",
-    name: "Especial",
-    price: 199,
-    photos: 40,
-    features: [
-      "40 fotos impressas em Polaroid (180g)",
-      "Scrapbook A5 com folhas pretas",
-      "Caneta branca + cola bastao",
-      "2 cartelas de adesivos premium",
-      "Embalagem presente com laco",
-      "Envio em ate 7 dias uteis",
-    ],
-    popular: true,
-  },
-  {
+function getPlanFromPhotos(count: number) {
+  if (count <= 20) {
+    return {
+      id: "essencial",
+      name: "Essencial",
+      basePrice: 149,
+      includedPhotos: 20,
+      extras: 0,
+      extraCost: 0,
+      total: 149,
+    };
+  }
+  if (count <= 40) {
+    return {
+      id: "especial",
+      name: "Especial",
+      basePrice: 199,
+      includedPhotos: 40,
+      extras: 0,
+      extraCost: 0,
+      total: 199,
+    };
+  }
+  const extras = Math.max(0, count - 60);
+  const extraCost = extras * 3.5;
+  return {
     id: "premium",
     name: "Premium",
-    price: 250,
-    photos: 60,
-    features: [
-      "60 fotos impressas em Polaroid (180g)",
-      "Scrapbook A5 premium com folhas pretas",
-      "Caneta branca + cola bastao",
-      "3 cartelas de adesivos exclusivos",
-      "Recortes decorativos",
-      "Cartinha escrita a mao inclusa",
-      "Embalagem premium de presente",
-      "Envio em ate 7 dias uteis",
-    ],
-    popular: false,
-  },
-];
+    basePrice: 250,
+    includedPhotos: 60,
+    extras,
+    extraCost,
+    total: 250 + extraCost,
+  };
+}
 
 const categories = [
   { value: "casal", label: "Casal" },
@@ -91,15 +72,13 @@ const categories = [
   { value: "momentos", label: "Momentos" },
 ];
 
+const STEP_LABELS = ["Info", "Fotos", "Revisao"];
+
 function OrderFlow() {
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get("categoria") || "";
-  const initialPlan = searchParams.get("plano") as Plan | null;
 
-  const [step, setStep] = useState(initialPlan ? 2 : 1);
-  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(
-    initialPlan || null
-  );
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     name: "",
     whatsapp: "",
@@ -111,14 +90,7 @@ function OrderFlow() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const currentPlan = plans.find((p) => p.id === selectedPlan);
-  const maxPhotos = currentPlan?.photos || 20;
-
-  const handlePlanSelect = (planId: Plan) => {
-    setSelectedPlan(planId);
-    setStep(2);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  const plan = getPlanFromPhotos(photos.length);
 
   const handleInputChange = (
     e: React.ChangeEvent<
@@ -143,16 +115,12 @@ function OrderFlow() {
   const handlePhotos = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(e.target.files || []);
-      const remaining = maxPhotos - photos.length;
-      const toAdd = files.slice(0, remaining);
-
-      setPhotos((prev) => [...prev, ...toAdd]);
-      const newPreviews = toAdd.map((f) => URL.createObjectURL(f));
+      setPhotos((prev) => [...prev, ...files]);
+      const newPreviews = files.map((f) => URL.createObjectURL(f));
       setPreviews((prev) => [...prev, ...newPreviews]);
-
       if (fileInputRef.current) fileInputRef.current.value = "";
     },
-    [photos, maxPhotos]
+    []
   );
 
   const removePhoto = (index: number) => {
@@ -161,9 +129,9 @@ function OrderFlow() {
     setPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const canProceedStep2 =
+  const canProceedStep1 =
     formData.name.trim() && formData.whatsapp.trim() && formData.category;
-  const canProceedStep3 = photos.length > 0;
+  const canProceedStep2 = photos.length > 0;
 
   const goBack = () => {
     setStep((s) => Math.max(1, s - 1));
@@ -171,11 +139,10 @@ function OrderFlow() {
   };
 
   const goNext = () => {
-    setStep((s) => Math.min(4, s + 1));
+    setStep((s) => Math.min(3, s + 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // --- FINALIZE: POST to API + WhatsApp ---
   const handleFinalize = async () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -188,12 +155,14 @@ function OrderFlow() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          plan: selectedPlan,
+          plan: plan.id,
           name: formData.name,
           whatsapp: formData.whatsapp.replace(/\D/g, ""),
           category: formData.category,
           message: formData.message,
           photoCount: photos.length,
+          total: plan.total,
+          extras: plan.extras,
         }),
       });
 
@@ -205,27 +174,22 @@ function OrderFlow() {
         return;
       }
 
-      // TODO: Upload images to S3 using presigned URLs
-
       const msg = [
         `*Novo Pedido Mimoobook*`,
         `*Pedido:* #${data.orderNumber}`,
         ``,
-        `*Plano:* ${currentPlan?.name} (R$ ${currentPlan?.price})`,
+        `*Plano:* ${plan.name}${plan.extras > 0 ? ` + ${plan.extras} fotos extras` : ""}`,
+        `*Valor:* R$ ${plan.total.toFixed(2)}`,
         `*Nome:* ${formData.name}`,
         `*Categoria:* ${categoryLabel}`,
         formData.message ? `*Dedicatoria:* "${formData.message}"` : "",
-        `*Fotos:* ${photos.length} enviadas`,
+        `*Fotos:* ${photos.length}`,
         ``,
         `_Pedido registrado com sucesso!_`,
       ]
         .filter(Boolean)
         .join("\n");
 
-      /* ═══════════════════════════════════════════
-         Substitua SEUNUMERO pelo WhatsApp da loja
-         Formato: 55 + DDD + numero (sem espacos)
-         ═══════════════════════════════════════════ */
       const url = `https://wa.me/5521982077479?text=${encodeURIComponent(msg)}`;
       window.open(url, "_blank");
     } catch {
@@ -235,13 +199,76 @@ function OrderFlow() {
     }
   };
 
+  // Plan indicator badge for step 2
+  const PlanBadge = () => {
+    if (photos.length === 0) return null;
+    return (
+      <div className="bg-white rounded-2xl p-4 shadow-md border border-rose-light/20 mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs text-text-light">Seu plano atual</p>
+            <p className="text-lg font-bold text-dark">
+              {plan.name}{" "}
+              <span className="text-rose">
+                R$ {plan.total.toFixed(2)}
+              </span>
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="text-xs text-text-light">{photos.length} fotos</p>
+            {photos.length <= 20 && (
+              <p className="text-xs text-rose">
+                +{20 - photos.length} fotos = ainda Essencial
+              </p>
+            )}
+            {photos.length > 20 && photos.length <= 40 && (
+              <p className="text-xs text-rose">
+                +{40 - photos.length} fotos = ainda Especial
+              </p>
+            )}
+            {photos.length > 40 && photos.length <= 60 && (
+              <p className="text-xs text-rose">
+                +{60 - photos.length} fotos = ainda Premium
+              </p>
+            )}
+            {photos.length > 60 && (
+              <p className="text-xs text-amber-600">
+                {plan.extras} extras × R$ 3,50 = +R$ {plan.extraCost.toFixed(2)}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Progress bar visual dos planos */}
+        <div className="mt-3 flex gap-1">
+          <div className="flex-1">
+            <div className={`h-1.5 rounded-full ${photos.length >= 1 ? "bg-rose" : "bg-nude-light"}`} />
+            <p className="text-[10px] text-text-light mt-1">Essencial (ate 20)</p>
+          </div>
+          <div className="flex-1">
+            <div className={`h-1.5 rounded-full ${photos.length > 20 ? "bg-rose" : "bg-nude-light"}`} />
+            <p className="text-[10px] text-text-light mt-1">Especial (21-40)</p>
+          </div>
+          <div className="flex-1">
+            <div className={`h-1.5 rounded-full ${photos.length > 40 ? "bg-rose" : "bg-nude-light"}`} />
+            <p className="text-[10px] text-text-light mt-1">Premium (41-60)</p>
+          </div>
+          <div className="flex-1">
+            <div className={`h-1.5 rounded-full ${photos.length > 60 ? "bg-amber-400" : "bg-nude-light"}`} />
+            <p className="text-[10px] text-text-light mt-1">Extra (+R$3,50/foto)</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <main className="min-h-screen pt-24 pb-16 bg-cream">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Progress bar */}
         <div className="mb-12">
           <div className="flex items-center justify-between mb-4">
-            {["Plano", "Informacoes", "Fotos", "Revisao"].map((label, i) => (
+            {STEP_LABELS.map((label, i) => (
               <div key={label} className="flex items-center gap-2">
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
@@ -267,97 +294,21 @@ function OrderFlow() {
           <div className="w-full h-2 bg-nude-light rounded-full overflow-hidden">
             <div
               className="h-full bg-rose rounded-full transition-all duration-500"
-              style={{ width: `${(step / 4) * 100}%` }}
+              style={{ width: `${(step / 3) * 100}%` }}
             />
           </div>
         </div>
 
-        {/* STEP 1: Plano */}
+        {/* STEP 1: Informacoes */}
         {step === 1 && (
           <div>
             <div className="text-center mb-10">
               <h1 className="text-3xl sm:text-4xl font-bold text-dark mb-4">
-                Escolha seu <span className="text-rose italic">plano</span>
+                Crie seu <span className="text-rose italic">Mimoobook</span>
               </h1>
               <p className="text-text-light">
-                Todos feitos a mao com o mesmo carinho. Voce recebe o scrapbook
-                com folhas pretas, fotos impressas em Polaroid, caneta branca e
-                adesivos pra montar do seu jeito.
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              {plans.map((plan) => (
-                <button
-                  key={plan.id}
-                  onClick={() => handlePlanSelect(plan.id)}
-                  className={`relative rounded-3xl p-6 text-left transition-all hover:scale-105 ${
-                    plan.popular
-                      ? "bg-dark text-white shadow-2xl ring-2 ring-rose"
-                      : "bg-white shadow-lg border border-rose-light/30"
-                  }`}
-                >
-                  {plan.popular && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-rose text-white text-xs font-bold px-4 py-1 rounded-full">
-                      Mais escolhido
-                    </div>
-                  )}
-                  <h3
-                    className={`text-xl font-bold mb-1 ${plan.popular ? "text-white" : "text-dark"}`}
-                  >
-                    {plan.name}
-                  </h3>
-                  <div className="flex items-baseline gap-1 mb-4">
-                    <span
-                      className={`text-sm ${plan.popular ? "text-white/60" : "text-text-light"}`}
-                    >
-                      R$
-                    </span>
-                    <span
-                      className={`text-4xl font-bold ${plan.popular ? "text-rose-light" : "text-rose"}`}
-                    >
-                      {plan.price}
-                    </span>
-                  </div>
-                  <p
-                    className={`text-sm mb-4 font-medium ${plan.popular ? "text-rose-light" : "text-rose"}`}
-                  >
-                    {plan.photos} fotos Polaroid
-                  </p>
-                  <ul className="space-y-2">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2">
-                        <Check
-                          size={14}
-                          className={`mt-0.5 flex-shrink-0 ${plan.popular ? "text-rose-light" : "text-rose"}`}
-                        />
-                        <span
-                          className={`text-xs ${plan.popular ? "text-white/80" : "text-text-light"}`}
-                        >
-                          {f}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* STEP 2: Informacoes */}
-        {step === 2 && (
-          <div>
-            <div className="text-center mb-10">
-              <h1 className="text-3xl sm:text-4xl font-bold text-dark mb-4">
-                Suas <span className="text-rose italic">informacoes</span>
-              </h1>
-              <p className="text-text-light">
-                Plano{" "}
-                <span className="font-bold text-dark">
-                  {currentPlan?.name}
-                </span>{" "}
-                selecionado · R$ {currentPlan?.price}
+                Preencha seus dados e depois selecione suas fotos.
+                O plano e calculado automaticamente pela quantidade de fotos.
               </p>
             </div>
 
@@ -421,20 +372,34 @@ function OrderFlow() {
                 />
               </div>
 
+              {/* Info planos */}
+              <div className="bg-rose/5 rounded-2xl p-4 border border-rose/20">
+                <div className="flex items-start gap-2">
+                  <Info size={16} className="text-rose mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-text">
+                    <p className="font-bold text-dark mb-1">Como funciona o preco?</p>
+                    <p>Ate 20 fotos = <strong>Essencial R$ 149</strong></p>
+                    <p>21 a 40 fotos = <strong>Especial R$ 199</strong></p>
+                    <p>41 a 60 fotos = <strong>Premium R$ 250</strong></p>
+                    <p>Acima de 60 = Premium + <strong>R$ 3,50 por foto extra</strong></p>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex gap-4 pt-4">
-                <button
-                  onClick={goBack}
+                <Link
+                  href="/"
                   className="flex items-center gap-2 px-6 py-3 border-2 border-nude text-brown rounded-full font-medium hover:bg-nude-light transition-colors"
                 >
                   <ArrowLeft size={18} />
                   Voltar
-                </button>
+                </Link>
                 <button
                   onClick={goNext}
-                  disabled={!canProceedStep2}
+                  disabled={!canProceedStep1}
                   className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-rose text-white rounded-full font-bold hover:bg-rose-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  Proximo: Fotos
+                  Proximo: Selecionar Fotos
                   <ArrowRight size={18} />
                 </button>
               </div>
@@ -442,21 +407,21 @@ function OrderFlow() {
           </div>
         )}
 
-        {/* STEP 3: Upload de fotos */}
-        {step === 3 && (
+        {/* STEP 2: Upload de fotos (sem limite) */}
+        {step === 2 && (
           <div>
             <div className="text-center mb-10">
               <h1 className="text-3xl sm:text-4xl font-bold text-dark mb-4">
-                Escolha suas <span className="text-rose italic">fotos</span>
+                Selecione suas <span className="text-rose italic">fotos</span>
               </h1>
               <p className="text-text-light">
-                Selecione ate{" "}
-                <span className="font-bold text-dark">{maxPhotos} fotos</span>.
-                Elas serao impressas em Polaroid com gramatura de 180g.
+                Escolha quantas fotos quiser. O plano se ajusta automaticamente.
               </p>
             </div>
 
             <div className="max-w-2xl mx-auto">
+              <PlanBadge />
+
               <div
                 onClick={() => fileInputRef.current?.click()}
                 className="border-2 border-dashed border-rose/40 rounded-2xl p-8 text-center cursor-pointer hover:border-rose hover:bg-rose/5 transition-all mb-6"
@@ -470,36 +435,25 @@ function OrderFlow() {
                   className="hidden"
                 />
                 <div className="flex flex-col items-center gap-3">
-                  {photos.length < maxPhotos ? (
-                    <>
-                      <div className="w-16 h-16 rounded-full bg-rose/10 flex items-center justify-center">
-                        <Camera size={28} className="text-rose" />
-                      </div>
-                      <p className="font-bold text-dark">
-                        Toque para abrir a galeria
-                      </p>
-                      <p className="text-sm text-text-light">
-                        {photos.length} de {maxPhotos} fotos selecionadas
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <div className="w-16 h-16 rounded-full bg-rose/10 flex items-center justify-center">
-                        <Check size={28} className="text-rose" />
-                      </div>
-                      <p className="font-bold text-rose">
-                        Todas as {maxPhotos} fotos selecionadas!
-                      </p>
-                    </>
-                  )}
+                  <div className="w-16 h-16 rounded-full bg-rose/10 flex items-center justify-center">
+                    <Camera size={28} className="text-rose" />
+                  </div>
+                  <p className="font-bold text-dark">
+                    Toque para abrir a galeria
+                  </p>
+                  <p className="text-sm text-text-light">
+                    {photos.length === 0
+                      ? "Nenhuma foto selecionada ainda"
+                      : `${photos.length} foto${photos.length > 1 ? "s" : ""} selecionada${photos.length > 1 ? "s" : ""}`}
+                  </p>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-sm font-medium text-dark">
-                  {photos.length} de {maxPhotos} fotos
-                </span>
-                {photos.length > 0 && photos.length < maxPhotos && (
+              {photos.length > 0 && (
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-sm font-medium text-dark">
+                    {photos.length} foto{photos.length > 1 ? "s" : ""}
+                  </span>
                   <button
                     onClick={() => fileInputRef.current?.click()}
                     className="flex items-center gap-1 text-sm font-medium text-rose hover:text-rose-dark"
@@ -507,8 +461,8 @@ function OrderFlow() {
                     <ImagePlus size={16} />
                     Adicionar mais
                   </button>
-                )}
-              </div>
+                </div>
+              )}
 
               {previews.length > 0 && (
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 mb-8">
@@ -543,7 +497,7 @@ function OrderFlow() {
                 </button>
                 <button
                   onClick={goNext}
-                  disabled={!canProceedStep3}
+                  disabled={!canProceedStep2}
                   className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-rose text-white rounded-full font-bold hover:bg-rose-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   Proximo: Revisao
@@ -554,8 +508,8 @@ function OrderFlow() {
           </div>
         )}
 
-        {/* STEP 4: Revisao + Finalizar */}
-        {step === 4 && (
+        {/* STEP 3: Revisao + Finalizar */}
+        {step === 3 && (
           <div>
             <div className="text-center mb-10">
               <h1 className="text-3xl sm:text-4xl font-bold text-dark mb-4">
@@ -569,9 +523,27 @@ function OrderFlow() {
             <div className="max-w-lg mx-auto">
               <div className="bg-white rounded-2xl p-6 shadow-lg border border-rose-light/20 space-y-4 mb-8">
                 <div className="flex justify-between items-center pb-4 border-b border-cream">
-                  <span className="text-text-light text-sm">Plano</span>
-                  <span className="font-bold text-dark">
-                    {currentPlan?.name} — R$ {currentPlan?.price}
+                  <span className="text-text-light text-sm">Plano detectado</span>
+                  <span className="font-bold text-dark">{plan.name}</span>
+                </div>
+                <div className="flex justify-between items-center pb-4 border-b border-cream">
+                  <span className="text-text-light text-sm">Fotos</span>
+                  <span className="font-bold text-dark">{photos.length}</span>
+                </div>
+                {plan.extras > 0 && (
+                  <div className="flex justify-between items-center pb-4 border-b border-cream">
+                    <span className="text-text-light text-sm">
+                      Fotos extras ({plan.extras} × R$ 3,50)
+                    </span>
+                    <span className="font-bold text-amber-600">
+                      + R$ {plan.extraCost.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center pb-4 border-b border-cream bg-rose/5 -mx-6 px-6 py-3">
+                  <span className="font-bold text-dark text-lg">Total</span>
+                  <span className="font-bold text-rose text-2xl">
+                    R$ {plan.total.toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center pb-4 border-b border-cream">
@@ -580,33 +552,20 @@ function OrderFlow() {
                 </div>
                 <div className="flex justify-between items-center pb-4 border-b border-cream">
                   <span className="text-text-light text-sm">WhatsApp</span>
-                  <span className="font-bold text-dark">
-                    {formData.whatsapp}
-                  </span>
+                  <span className="font-bold text-dark">{formData.whatsapp}</span>
                 </div>
                 <div className="flex justify-between items-center pb-4 border-b border-cream">
                   <span className="text-text-light text-sm">Categoria</span>
                   <span className="font-bold text-dark">
-                    {categories.find((c) => c.value === formData.category)
-                      ?.label || "—"}
+                    {categories.find((c) => c.value === formData.category)?.label || "—"}
                   </span>
                 </div>
                 {formData.message && (
                   <div className="pb-4 border-b border-cream">
-                    <span className="text-text-light text-sm block mb-1">
-                      Dedicatoria
-                    </span>
-                    <p className="text-dark italic">
-                      &ldquo;{formData.message}&rdquo;
-                    </p>
+                    <span className="text-text-light text-sm block mb-1">Dedicatoria</span>
+                    <p className="text-dark italic">&ldquo;{formData.message}&rdquo;</p>
                   </div>
                 )}
-                <div className="flex justify-between items-center">
-                  <span className="text-text-light text-sm">Fotos</span>
-                  <span className="font-bold text-dark">
-                    {photos.length} selecionadas
-                  </span>
-                </div>
               </div>
 
               {previews.length > 0 && (
@@ -622,12 +581,16 @@ function OrderFlow() {
                 </div>
               )}
 
+              {/* Kit info */}
               <div className="bg-rose/5 rounded-2xl p-4 mb-8 border border-rose/20">
                 <p className="text-sm text-text leading-relaxed">
-                  Ao clicar em{" "}
-                  <strong>&ldquo;Finalizar Pedido&rdquo;</strong>, seu pedido
-                  sera registrado e voce sera redirecionado para o WhatsApp com
-                  o resumo e numero do pedido.
+                  <strong>Voce vai receber em casa:</strong> scrapbook A5 com
+                  folhas pretas, {photos.length} fotos impressas em Polaroid
+                  (180g), caneta branca, cola bastao e
+                  {plan.id === "essencial" && " 1 cartela de adesivos tematicos"}
+                  {plan.id === "especial" && " 2 cartelas de adesivos premium"}
+                  {plan.id === "premium" && " 3 cartelas de adesivos exclusivos + recortes decorativos"}
+                  . Envio em ate 7 dias uteis.
                 </p>
               </div>
 
@@ -652,7 +615,7 @@ function OrderFlow() {
                   ) : (
                     <>
                       <MessageCircle size={22} fill="currentColor" />
-                      Finalizar Pedido
+                      Finalizar Pedido — R$ {plan.total.toFixed(2)}
                     </>
                   )}
                 </button>
@@ -661,7 +624,6 @@ function OrderFlow() {
           </div>
         )}
 
-        {/* Link voltar */}
         <div className="text-center mt-12">
           <Link
             href="/"
